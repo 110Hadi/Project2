@@ -2,21 +2,31 @@
 import network
 import time
 
-SSID = "YOUR_WIFI_NAME"
-PASSWORD = "YOUR_WIFI_PASSWORD"
+SSID = "TECNO SPARK"
+PASSWORD = "777777di"
 
-# Initialize Wi-Fi in station mode
 wlan = network.WLAN(network.STA_IF)
 wlan.active(True)
 
-# Connect to Wi-Fi
+print("WiFi active:", wlan.active())
+print("Connecting to:", SSID)
+
 wlan.connect(SSID, PASSWORD)
 
-print("Connecting to Wi-Fi...")
+for i in range(40):
+    status = wlan.status()
 
-while not wlan.isconnected():
+    print("Attempt:", i + 1)
+    print("Status:", status)
+    print("Connected:", wlan.isconnected())
+
+    if wlan.isconnected():
+        print("SUCCESS!")
+        print("IP Config:", wlan.ifconfig())
+        break
+
     time.sleep(1)
-    print("Waiting...")
 
-print("Connected!")
-print("Network configuration:", wlan.ifconfig())
+else:
+    print("Connection failed!")
+    print("Final status:", wlan.status())
