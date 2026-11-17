@@ -3,7 +3,7 @@ from time import ticks_ms, ticks_diff
 from utime import sleep
 
 # ------------------------- CONSTANTS --------------------------- #
-LPG_THRESHOLD = 11000
+LPG_THRESHOLD = 15000
 MQ2_PIN = 26
 SAMPLE_PERIOD = 1000
 

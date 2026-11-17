@@ -1,0 +1,4 @@
+MQ2 LM393 sensor V_IO = 5mV
+Using DO pin. adjust the high and low voltage using the on-board potentiometer
+
+Best Performance -> preheat for 24 hours
