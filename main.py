@@ -2,16 +2,17 @@
 import network
 import time
 
-SSID = "TECNO SPARK"
-PASSWORD = "777777di"
+# TODO: Replace these sample values with your Wi-Fi credentials.
+WIFI_SSID = "TECNO SPARK"
+WIFI_PASSWORD = "777777di"
 
 wlan = network.WLAN(network.STA_IF)
 wlan.active(True)
 
 print("WiFi active:", wlan.active())
-print("Connecting to:", SSID)
+print("Connecting to:", WIFI_SSID)
 
-wlan.connect(SSID, PASSWORD)
+wlan.connect(WIFI_SSID, WIFI_PASSWORD)
 
 for i in range(40):
     status = wlan.status()
@@ -26,7 +27,10 @@ for i in range(40):
         break
 
     time.sleep(1)
-
 else:
     print("Connection failed!")
     print("Final status:", wlan.status())
+
+if wlan.isconnected():
+    # MQ2.py starts the sensor sampling/upload loop.
+    import MQ2
