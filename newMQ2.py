@@ -1,6 +1,7 @@
 from machine import Pin, Timer, ADC
 import ujson
 import urequests
+import gc
 
 # API settings: keep these values in sync with Project2/api/app.py.
 API_URL = "http://10.232.175.68:8000/api/readings"
@@ -19,6 +20,7 @@ LC_PIN = 27
 # -------------------------------- SET-UP ------------------------- #
 mq2 = ADC(Pin(MQ2_PIN))
 fresh = False
+lcfresh = False
 latest = mq2.read_u16()
 lc = ADC(Pin(LC_PIN))
 
@@ -26,6 +28,7 @@ lc = ADC(Pin(LC_PIN))
 def send_reading(value):
     response = None
     try:
+        gc.collect()
         response = urequests.post(
             API_URL,
             data=ujson.dumps(
@@ -42,6 +45,10 @@ def send_reading(value):
     except Exception as exc:
         print("Upload failed:", exc)
         return False
+    finally:
+        if response is not None:
+            response.close()
+        gc.collect()
 
 
 

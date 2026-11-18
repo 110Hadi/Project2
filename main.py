@@ -32,5 +32,5 @@ else:
     print("Final status:", wlan.status())
 
 if wlan.isconnected():
-    # MQ2.py starts the sensor sampling/upload loop.
-    import MQ2
+    # newMQ2.py starts the sensor sampling/upload loop.
+    import newMQ2

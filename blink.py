@@ -12,3 +12,13 @@ while True:
         break
 pin.off()
 print("Finished.")
+
+
+# delete codeing
+# import os
+
+# for item in os.listdir():
+#     try:
+#         os.remove(item)
+#     except OSError:
+#         print("Folder skipped:", item)
