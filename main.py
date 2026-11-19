@@ -1,10 +1,13 @@
 
 import network
 import time
+from machine import Pin, PWM, ADC, Timer
 
-# TODO: Replace these sample values with your Wi-Fi credentials.
-WIFI_SSID = "TECNO SPARK"
-WIFI_PASSWORD = "777777di"
+LED = Pin("LED", Pin.OUT) 
+
+time.sleep(2)
+WIFI_SSID = 'Error'
+WIFI_PASSWORD = 'rimjhim125'
 
 wlan = network.WLAN(network.STA_IF)
 wlan.active(True)
@@ -24,6 +27,14 @@ for i in range(40):
     if wlan.isconnected():
         print("SUCCESS!")
         print("IP Config:", wlan.ifconfig())
+        LED.toggle()
+        time.sleep(0.1)
+        LED.toggle()
+        time.sleep(0.1)
+        LED.toggle()
+        time.sleep(0.1)
+        LED.toggle()
+        time.sleep(0.1)
         break
 
     time.sleep(1)
