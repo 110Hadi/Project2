@@ -3,9 +3,8 @@ from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
 
-# TODO: Replace these sample values before deploying the API.
-DATABASE_URL = "postgresql://neondb_owner:npg_cpNXR0EOgD4j@ep-misty-meadow-bev3ppdk-pooler.c-9.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
-DEVICE_TOKEN = "8nmWa9S8z62d3Ts3RdDB68MNfjCIxWt8mTcBFCatjtw"
+DATABASE_URL = 'postgresql://neondb_owner:npg_cpNXR0EOgD4j@ep-misty-meadow-bev3ppdk-pooler.c-9.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
+DEVICE_TOKEN = '8nmWa9S8z62d3Ts3RdDB68MNfjCIxWt8mTcBFCatjtw'
 
 app = FastAPI(title="MQ-2 readings API", version="1.0.0")
 
@@ -22,7 +21,7 @@ def health():
 
 @app.post("/api/readings", status_code=201)
 def create_reading(reading: Reading, authorization: str | None = Header(default=None)):
-    if "REPLACE_WITH_" in DATABASE_URL or "REPLACE_WITH_" in DEVICE_TOKEN:
+    if not DATABASE_URL or not DEVICE_TOKEN:
         raise HTTPException(status_code=503, detail="API is not configured")
 
     if authorization != f"Bearer {DEVICE_TOKEN}":

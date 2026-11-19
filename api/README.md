@@ -3,17 +3,21 @@
 The Pico W sends raw 16-bit ADC samples to this service. The service checks a
 shared bearer token and inserts each sample into Neon PostgreSQL.
 
-## Configure and run
+## Local setup
 
-Replace the marked sample `DATABASE_URL` and `DEVICE_TOKEN` values at the top
-of `app.py`. Use the pooled connection string from Neon. Use the exact same
-token in `send_reading.py`. Run the SQL in `schema.sql` once in the Neon SQL
-Editor. Then install `requirements.txt` and run
-`uvicorn app:app --host 0.0.0.0 --port 8000` from this directory.
+The Pico W is powered from the laptop USB port and joins the same Wi-Fi network
+as the laptop. The Pico posts each raw 16-bit MQ-2 ADC sample to the laptop's
+local API, and the API inserts it into Neon. The current Pico URL is
+`http://192.168.1.140:8000/api/readings`; update that address in `newMQ2.py`
+if the laptop receives a different Wi-Fi IP later.
 
-For deployment, use the service's HTTPS URL on the Pico. Replace all marked
-sample settings before deployment; the example token is public and must not be
-used as a real security token.
+Run `python -m pip install -r requirements.txt` once, then start the API from
+this directory with `python -m uvicorn app:app --host 0.0.0.0 --port 8000`.
+Keep the laptop and Pico on the same Wi-Fi network. The Neon table
+`mq2_readings` must already exist.
+
+The Wi-Fi, API token, and Neon connection settings are currently written
+directly in the source files for this local setup.
 
 ## Endpoint
 
