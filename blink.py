@@ -1,23 +1,26 @@
-from machine import Pin
+from machine import Pin, ADC
 import time
 
-# HX711 connections: DT/DOUT -> Pico GP16, SCK/CLK -> Pico GP17
+# MQ-2 analog output -> Pico GP26
+mq2 = ADC(Pin(26))
+
+# HX711: DT/DOUT -> Pico GP16, SCK/CLK -> Pico GP17
 DT = Pin(16, Pin.IN, Pin.PULL_UP)
 SCK = Pin(17, Pin.OUT)
 SCK.value(0)
 
-# Calibrated values from the working load-cell setup.
+# Same calibrated values as the working load-cell code
 CALIBRATION_FACTOR = 201.75
 POLARITY = -1
-ZERO_SAMPLES = 20
+TARE_SAMPLES = 20
 
 
-def read_raw():
-    # HX711 pulls DT low when one reading is ready.
+def read_load_cell_raw():
+    # HX711 pulls DT low when a reading is ready.
     started = time.ticks_ms()
-    while DT.value():
+    while DT.value() == 1:
         if time.ticks_diff(time.ticks_ms(), started) > 3000:
-            raise OSError("HX711 timeout: check its power and DT/SCK wiring")
+            raise OSError("HX711 timeout: check DT, SCK, power, and GND")
         time.sleep_ms(1)
 
     value = 0
@@ -26,7 +29,7 @@ def read_raw():
         value = (value << 1) | DT.value()
         SCK.value(0)
 
-    # 25th pulse selects channel A, gain 128.
+    # Extra pulse selects channel A, gain 128.
     SCK.value(1)
     SCK.value(0)
 
@@ -36,23 +39,24 @@ def read_raw():
     return value
 
 
-def tare():
-    # Average only the empty-scale baseline. Live readings stay unsmoothed.
+def tare_load_cell():
     total = 0
-    for _ in range(ZERO_SAMPLES):
-        total += read_raw()
-    return total / ZERO_SAMPLES
+    for _ in range(TARE_SAMPLES):
+        total += read_load_cell_raw()
+    return total / TARE_SAMPLES
 
 
-print("Keep scale empty; setting zero...")
+print("Keep load cell empty; setting zero...")
 time.sleep(2)
-zero_value = tare()
-print("Ready. Showing live readings:")
+zero_value = tare_load_cell()
+print("MQ-2 and load-cell readings start now:")
 
 while True:
-    raw_value = read_raw()
+    mq2_value = mq2.read_u16()
+
+    raw_value = read_load_cell_raw()
     grams = max(0, (raw_value - zero_value) * POLARITY / CALIBRATION_FACTOR)
     kilograms = grams / 1000
 
-    print("Raw:", round(raw_value), " | Weight:", round(grams, 1), "g /", round(kilograms, 3), "kg")
-    time.sleep(1)
+    print("MQ-2:", mq2_value, "| Weight:", round(grams, 1), "g /", round(kilograms, 3), "kg")
+    time.sleep(2)
