@@ -1,47 +1,59 @@
 
 import network
 import time
-from machine import Pin, PWM, ADC, Timer
+from machine import Pin
 
-LED = Pin("LED", Pin.OUT) 
+LED = Pin("LED", Pin.OUT)
+LED.off()
 
 time.sleep(2)
 WIFI_SSID = 'Error'
 WIFI_PASSWORD = 'rimjhim125'
 
 wlan = network.WLAN(network.STA_IF)
-wlan.active(True)
 
-print("WiFi active:", wlan.active())
-print("Connecting to:", WIFI_SSID)
 
-wlan.connect(WIFI_SSID, WIFI_PASSWORD)
+def all_lights_off():
+    LED.off()
 
-for i in range(40):
-    status = wlan.status()
 
-    print("Attempt:", i + 1)
-    print("Status:", status)
-    print("Connected:", wlan.isconnected())
+def disconnect_wifi():
+    all_lights_off()
+    try:
+        wlan.disconnect()
+    except Exception:
+        pass
+    try:
+        wlan.active(False)
+    except Exception:
+        pass
 
-    if wlan.isconnected():
-        print("SUCCESS!")
-        print("IP Config:", wlan.ifconfig())
-        LED.toggle()
-        time.sleep(0.1)
-        LED.toggle()
-        time.sleep(0.1)
-        LED.toggle()
-        time.sleep(0.1)
-        LED.toggle()
-        time.sleep(0.1)
-        break
 
-    time.sleep(1)
-else:
-    print("Connection failed!")
-    print("Final status:", wlan.status())
+def connect_wifi():
+    wlan.active(True)
+    wlan.connect(WIFI_SSID, WIFI_PASSWORD)
+    print("Connecting to Wi-Fi...")
+    for _ in range(400):
+        if wlan.isconnected():
+            print("Wi-Fi connected:", wlan.ifconfig())
+            for _ in range(4):
+                LED.on()
+                time.sleep_ms(100)
+                LED.off()
+                time.sleep_ms(100)
+            return True
+        time.sleep_ms(100)
+    print("Wi-Fi connection timed out.")
+    return False
 
-if wlan.isconnected():
-    # newMQ2.py starts the sensor sampling/upload loop.
-    import newMQ2
+try:
+    while True:
+        if connect_wifi():
+            import newMQ2
+        else:
+            disconnect_wifi()
+            time.sleep_ms(1000)
+
+finally:
+    # Ctrl+C / IDE Stop par lights off aur Wi-Fi disconnect.
+    disconnect_wifi()
