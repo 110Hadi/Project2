@@ -1,7 +1,10 @@
-from machine import Pin
+from machine import Pin, ADC
 import time
 
-# HX711 connections
+# MQ-2 analog output -> Pico GP26
+mq2 = ADC(Pin(26))
+
+# HX711: DT/DOUT -> Pico GP16, SCK/CLK -> Pico GP17
 DT = Pin(16, Pin.IN, Pin.PULL_UP)
 SCK = Pin(17, Pin.OUT)
 SCK.value(0)
@@ -9,16 +12,15 @@ SCK.value(0)
 # Calibrated load-cell values
 CALIBRATION_FACTOR = 201.75
 POLARITY = -1
-
-# Averaging and smoothing settings
-ZERO_SAMPLES = 20
-READ_SAMPLES = 10
-FILTER_ALPHA = 0.25
-ZERO_DEADBAND_G = 3
+TARE_SAMPLES = 20
 
 
-def read_raw():
+def read_load_cell_raw():
+    # HX711 pulls DT low when a reading is ready.
+    started = time.ticks_ms()
     while DT.value() == 1:
+        if time.ticks_diff(time.ticks_ms(), started) > 3000:
+            raise OSError("HX711 timeout: check DT, SCK, power, and GND")
         time.sleep_ms(1)
 
     value = 0
@@ -27,46 +29,34 @@ def read_raw():
         value = (value << 1) | DT.value()
         SCK.value(0)
 
-    # 25th pulse selects channel A, gain 128.
+    # Extra pulse selects channel A, gain 128.
     SCK.value(1)
     SCK.value(0)
 
-    # Convert signed 24-bit value to a normal integer.
+    # Convert signed 24-bit data to a normal integer.
     if value & 0x800000:
         value -= 0x1000000
     return value
 
 
-def read_average(samples):
+def tare_load_cell():
     total = 0
-    for _ in range(samples):
-        total += read_raw()
-    return total / samples
+    for _ in range(TARE_SAMPLES):
+        total += read_load_cell_raw()
+    return total / TARE_SAMPLES
 
 
-print("Keep scale empty...")
+print("Keep load cell empty; setting zero...")
 time.sleep(2)
-zero_value = read_average(ZERO_SAMPLES)
-print("Zero set:", zero_value)
-filtered_grams = 0
+zero_value = tare_load_cell()
+print("MQ-2 and load-cell readings start now:")
 
 while True:
-    raw_value = read_average(READ_SAMPLES)
-    difference = raw_value - zero_value
-    corrected_difference = difference * POLARITY
-    grams = corrected_difference / CALIBRATION_FACTOR
+    mq2_value = mq2.read_u16()
 
-    filtered_grams += FILTER_ALPHA * (grams - filtered_grams)
-    if abs(filtered_grams) < ZERO_DEADBAND_G:
-        filtered_grams = 0
+    raw_value = read_load_cell_raw()
+    grams = max(0, (raw_value - zero_value) * POLARITY / CALIBRATION_FACTOR)
+    kilograms = grams / 1000
 
-    kilograms = filtered_grams / 1000
-
-    print("Raw average:", round(raw_value))
-    print("Zero se farq:", round(corrected_difference))
-    print("Raw weight:", round(grams, 1), "g")
-    print("Smoothed weight:", round(filtered_grams, 1), "g")
-    print("Weight:", round(kilograms, 3), "kg")
-    print("-------------------")
-
-    time.sleep(1)
+    print("MQ-2:", mq2_value, "| Weight:", round(grams, 1), "g /", round(kilograms, 3), "kg")
+    time.sleep(2)
